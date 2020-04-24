@@ -1,6 +1,8 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const colors = require('colors');
+const cookieParser = require('cookie-parser');
+const errorHandler = require('./middleware/error');
 const connectDB = require('./config/db');
 
 // Load env vars
@@ -9,7 +11,21 @@ dotenv.config({ path: './config/config.env' });
 // Connect to database
 connectDB();
 
+// Route files
+const auth = require('./routes/auth');
+
 const app = express();
+
+// Body parser
+app.use(express.json());
+
+// Cookie parser
+app.use(cookieParser());
+
+// Mount routers
+app.use('/api/v2/auth', auth);
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
