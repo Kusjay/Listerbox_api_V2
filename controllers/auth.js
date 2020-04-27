@@ -13,7 +13,7 @@ exports.register = asyncHandler(async (req, res, next) => {
     name,
     email,
     password,
-    role,
+    role
   });
 
   sendTokenResponse(user, 200, res);
@@ -54,12 +54,31 @@ exports.logout = asyncHandler(async (req, res, next) => {
   res.cookie('token', 'none', {
     // Expires in 10 sec
     expires: new Date(Date.now() + 10 * 1000),
-    httpOnly: true,
+    httpOnly: true
   });
 
   res.status(200).json({
     success: true,
-    data: {},
+    data: {}
+  });
+});
+
+// @desc    Get current logged in user
+// @route   GET /api/v2/auth/me
+// @access  Private
+
+exports.getMe = asyncHandler(async (req, res, next) => {
+  const user = await User.findById(req.user.id);
+
+  // if (!user) {
+  //   return next(new ErrorResponse('No user is logged in', 401));
+  // }
+
+  // console.log(req.user.id);
+
+  res.status(200).json({
+    success: true,
+    data: user
   });
 });
 
@@ -72,7 +91,7 @@ const sendTokenResponse = (user, statusCode, res) => {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
     ),
-    httpOnly: true,
+    httpOnly: true
   };
 
   if (process.env.NODE_ENV === 'production') {
@@ -81,6 +100,6 @@ const sendTokenResponse = (user, statusCode, res) => {
 
   res.status(statusCode).cookie('token', token, options).json({
     success: true,
-    token,
+    token
   });
 };
