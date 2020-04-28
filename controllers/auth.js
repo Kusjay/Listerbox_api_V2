@@ -1,5 +1,7 @@
+const crypto = require('crypto');
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
+const sendEmail = require('../utils/sendEmail');
 const User = require('../models/User');
 
 // @desc    Register user
@@ -49,7 +51,6 @@ exports.login = asyncHandler(async (req, res, next) => {
 // @desc    Log user out / clear cookie
 // @route   POST /api/v2/auth/logout
 // @access  Private
-
 exports.logout = asyncHandler(async (req, res, next) => {
   res.cookie('token', 'none', {
     // Expires in 10 sec
@@ -66,7 +67,6 @@ exports.logout = asyncHandler(async (req, res, next) => {
 // @desc    Get current logged in user
 // @route   GET /api/v2/auth/me
 // @access  Private
-
 exports.getMe = asyncHandler(async (req, res, next) => {
   const user = await User.findById(req.user.id);
 
@@ -98,8 +98,7 @@ exports.updateDetails = asyncHandler(async (req, res, next) => {
 
 // @desc    Update password
 // @route   PUT /api/v2/auth/updatepassword
-// @access  Private\
-
+// @access  Private
 exports.updatePassword = asyncHandler(async (req, res, next) => {
   const user = await User.findById(req.user.id).select('+password');
 
@@ -112,6 +111,55 @@ exports.updatePassword = asyncHandler(async (req, res, next) => {
   await user.save();
 
   sendTokenResponse(user, 200, res);
+});
+
+// @desc    Forgot password
+// @route   PUT /api/v2/auth/forgotpassword
+// @access  Private
+exports.forgotPassword = asyncHandler(async (req, res, next) => {
+  const user = await User.findOne({ email: req.body.email });
+
+  if (!user) {
+    return next(new ErrorResponse('There is no user with that email', 404));
+  }
+
+  // Get reset token
+  const resetToken = user.getResetPasswordToken();
+
+  await user.save({ validateBeforeSave: false });
+
+  // Create reset url
+  const resetUrl = `${req.protocol}://${req.get(
+    'host'
+  )}/api/v2/auth/resetpassword/${resetToken}`;
+
+  const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: 'Password reset token',
+      message
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: 'Email sent'
+    });
+  } catch (err) {
+    console.log(err);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save({ validateBeforeSave: false });
+
+    return next(new ErrorResponse('Email could not be sent'));
+  }
+
+  res.status(200).json({
+    success: true,
+    data: user
+  });
 });
 
 // Get token from model, create cookie and send response
