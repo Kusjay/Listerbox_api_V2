@@ -8,3 +8,19 @@ const User = require('../models/User');
 exports.getUsers = asyncHandler(async (req, res, next) => {
   res.status(200).json(res.advancedResults);
 });
+
+// @desc    Get single users
+// @route   PUT /api/v2/users/:id
+// @access  Private/Admin
+exports.getUser = asyncHandler(async (req, res, next) => {
+  const user = await User.findById(req.params.id);
+
+  if (!user) {
+    return next(new ErrorResponse(`No user with id ${req.params.id}`, 401));
+  }
+
+  res.status(200).json({
+    success: true,
+    data: user
+  });
+});

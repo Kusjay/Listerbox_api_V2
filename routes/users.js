@@ -1,5 +1,5 @@
 const express = require('express');
-const { getUsers } = require('../controllers/users');
+const { getUsers, getUser } = require('../controllers/users');
 
 const User = require('../models/User');
 
@@ -12,5 +12,7 @@ router.use(protect);
 router.use(authorize('Admin'));
 
 router.route('/').get(advancedResults(User), getUsers);
+
+router.route('/:id').get(getUser);
 
 module.exports = router;
