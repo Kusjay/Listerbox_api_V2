@@ -13,6 +13,7 @@ connectDB();
 
 // Route files
 const auth = require('./routes/auth');
+const users = require('./routes/users');
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use(cookieParser());
 
 // Mount routers
 app.use('/api/v2/auth', auth);
+app.use('/api/v2/users', users);
 
 app.use(errorHandler);
 
