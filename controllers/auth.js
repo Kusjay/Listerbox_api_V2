@@ -49,7 +49,7 @@ exports.login = asyncHandler(async (req, res, next) => {
 });
 
 // @desc    Log user out / clear cookie
-// @route   POST /api/v2/auth/logout
+// @route   GET /api/v2/auth/logout
 // @access  Private
 exports.logout = asyncHandler(async (req, res, next) => {
   res.cookie('token', 'none', {
@@ -114,7 +114,7 @@ exports.updatePassword = asyncHandler(async (req, res, next) => {
 });
 
 // @desc    Forgot password
-// @route   PUT /api/v2/auth/forgotpassword
+// @route   POST /api/v2/auth/forgotpassword
 // @access  Private
 exports.forgotPassword = asyncHandler(async (req, res, next) => {
   const user = await User.findOne({ email: req.body.email });
