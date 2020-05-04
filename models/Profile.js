@@ -73,7 +73,7 @@ const ProfileSchema = new mongoose.Schema({
 });
 
 // Create profile slug from the name
-ProfileSchema.pre('save', function (nex) {
+ProfileSchema.pre('save', function (next) {
   this.slug = slugify(this.name, { lower: true });
   next();
 });
