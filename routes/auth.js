@@ -1,6 +1,7 @@
 const express = require('express');
 const {
   register,
+  confirmEmail,
   login,
   logout,
   getMe,
@@ -15,6 +16,7 @@ const router = express.Router();
 const { protect } = require('../middleware/auth');
 
 router.post('/register', register);
+router.put('/confirmSignup/:confirmToken', confirmEmail);
 router.post('/login', login);
 router.get('/logout', logout);
 router.get('/me', protect, getMe);

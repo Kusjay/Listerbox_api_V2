@@ -10,6 +10,12 @@ const User = require('../models/User');
 exports.register = asyncHandler(async (req, res, next) => {
   const { name, email, password, role } = req.body;
 
+  const userEmail = await User.findOne({ email });
+
+  if (userEmail) {
+    return next(new ErrorResponse('Email already taken', 401));
+  }
+
   // Create user
   const user = await User.create({
     name,
@@ -17,6 +23,69 @@ exports.register = asyncHandler(async (req, res, next) => {
     password,
     role
   });
+
+  res.status(200).json({
+    success: true,
+    data: 'Check your email to confirm registration'
+  });
+
+  // Get signup confirmation token
+  const signupToken = user.getConfirmSignupToken();
+
+  await user.save({ validateBeforeSave: false });
+
+  // Create signup confirmation url
+  const signupConfirmUrl = `${req.protocol}://${req.get(
+    'host'
+  )}/api/v2/auth/confirmSignup/${signupToken}`;
+
+  const message = `Kindly confirm your account registeration by making a PUT request to: \n\n ${signupConfirmUrl}`;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: 'Registration Confirmation',
+      message
+    });
+  } catch (err) {
+    console.log(err);
+    user.name = undefined;
+    user.email = undefined;
+    user.password = undefined;
+    user.role = undefined;
+    user.confirmSignupToken = undefined;
+    user.confirmSignupExpire = undefined;
+
+    await user.save({ validateBeforeSave: false });
+
+    return next(new ErrorResponse('Email could not be sent', 500));
+  }
+});
+
+// @desc    Confirm Registration
+// @route   PUT /api/v2/auth/confirmSignup/:confirmToken
+// @access Public
+
+exports.confirmEmail = asyncHandler(async (req, res, next) => {
+  // Get hashed token
+  const confirmSignupToken = crypto
+    .createHash('sha256')
+    .update(req.params.confirmToken)
+    .digest('hex');
+
+  const user = await User.findOne({
+    confirmSignupToken,
+    confirmSignupExpire: { $gt: Date.now() }
+  });
+
+  if (!user) {
+    return next(new ErrorResponse('Invalid token', 400));
+  }
+
+  // Sign in user and create cookie
+  user.confirmSignupToken = undefined;
+  user.confirmSignupExpire = undefined;
+  await user.save();
 
   sendTokenResponse(user, 200, res);
 });
