@@ -26,7 +26,7 @@ exports.register = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    data: 'Check your email to confirm registration'
+    data: `Please take a moment to verify your email address. We sent an email with a verification link to ${email}. If you didn't receive the email, check your spam folder`
   });
 
   // Get signup confirmation token
@@ -39,12 +39,12 @@ exports.register = asyncHandler(async (req, res, next) => {
     'host'
   )}/api/v2/auth/confirmSignup/${signupToken}`;
 
-  const message = `Kindly confirm your account registeration by making a PUT request to: \n\n ${signupConfirmUrl}`;
+  const message = `Hi ${user.name},\n\nTo verify your email address (${user.email}), Please click the following link \n\n${signupConfirmUrl} \n\nThank you, \nThe Listerbox Team`;
 
   try {
     await sendEmail({
       email: user.email,
-      subject: 'Registration Confirmation',
+      subject: 'Please verify your email address',
       message
     });
   } catch (err) {
