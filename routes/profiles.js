@@ -10,10 +10,16 @@ const {
 
 const Profile = require('../models/Profile');
 
+// Include other resource routers
+const taskRouter = require('./tasks');
+
 const router = express.Router();
 
 const advancedResults = require('../middleware/advancedResults');
 const { protect, authorize } = require('../middleware/auth');
+
+// Re-route into other resource routers
+router.use('/:profileId/tasks', taskRouter);
 
 router
   .route('/:id/photo')

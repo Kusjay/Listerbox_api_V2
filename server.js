@@ -17,6 +17,7 @@ connectDB();
 const auth = require('./routes/auth');
 const users = require('./routes/users');
 const profiles = require('./routes/profiles');
+const tasks = require('./routes/tasks');
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/v2/auth', auth);
 app.use('/api/v2/users', users);
 app.use('/api/v2/profiles', profiles);
+app.use('/api/v2/tasks', tasks);
 
 app.use(errorHandler);
 
