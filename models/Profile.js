@@ -2,75 +2,81 @@ const mongoose = require('mongoose');
 const slugify = require('slugify');
 const geocoder = require('../utils/geocoder');
 
-const ProfileSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    require: [true, 'Please add a profile name'],
-    unique: true,
-    trim: true,
-    maxlength: [50, 'Profile name can not be more than 50 characters']
-  },
-  accountNumber: {
-    type: Number,
-    select: false
-  },
-  bankName: {
-    type: String,
-    select: false
-  },
-  slug: String,
-  description: {
-    type: String,
-    require: [true, 'Please add a description'],
-    maxlength: [500, 'Description can not be more than 500 characters']
-  },
-  phone: {
-    type: String,
-    required: [true, 'Please add a phone number'],
-    maxlength: [20, 'Phone number can not be longer than 20 characters']
-  },
-  email: {
-    type: String,
-    match: [
-      /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-      'Please add a valid email'
-    ]
-  },
-  address: {
-    type: String,
-    required: [true, 'Please add an address']
-  },
-  location: {
-    // GeoJSON Point
-    type: {
+const ProfileSchema = new mongoose.Schema(
+  {
+    name: {
       type: String,
-      enum: ['Point']
+      require: [true, 'Please add a profile name'],
+      unique: true,
+      trim: true,
+      maxlength: [50, 'Profile name can not be more than 50 characters']
     },
-    coordinates: {
-      type: [Number],
-      index: '2dsphere'
+    accountNumber: {
+      type: Number,
+      select: false
     },
-    formattedAddress: String,
-    street: String,
-    city: String,
-    state: String,
-    zipcode: String,
-    country: String
+    bankName: {
+      type: String,
+      select: false
+    },
+    slug: String,
+    description: {
+      type: String,
+      require: [true, 'Please add a description'],
+      maxlength: [500, 'Description can not be more than 500 characters']
+    },
+    phone: {
+      type: String,
+      required: [true, 'Please add a phone number'],
+      maxlength: [20, 'Phone number can not be longer than 20 characters']
+    },
+    email: {
+      type: String,
+      match: [
+        /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+        'Please add a valid email'
+      ]
+    },
+    address: {
+      type: String,
+      required: [true, 'Please add an address']
+    },
+    location: {
+      // GeoJSON Point
+      type: {
+        type: String,
+        enum: ['Point']
+      },
+      coordinates: {
+        type: [Number],
+        index: '2dsphere'
+      },
+      formattedAddress: String,
+      street: String,
+      city: String,
+      state: String,
+      zipcode: String,
+      country: String
+    },
+    photo: {
+      type: String,
+      default: 'no-photo.jpg'
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    },
+    user: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User',
+      required: true
+    }
   },
-  photo: {
-    type: String,
-    default: 'no-photo.jpg'
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  user: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'User',
-    required: true
+  {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
   }
-});
+);
 
 // Create profile slug from the name
 ProfileSchema.pre('save', function (next) {
@@ -94,6 +100,19 @@ ProfileSchema.pre('save', async function (next) {
   // Do not save address in DB
   this.address = undefined;
   next();
+});
+
+// Cascade delete tasks when a profile is deleted
+ProfileSchema.pre('remove', async function (next) {
+  await this.model('Task').deleteMany({ profile: this._id });
+});
+
+//Reverse populate with virtuals
+ProfileSchema.virtual('tasks', {
+  ref: 'Task',
+  localField: '_id',
+  foreignField: 'profile',
+  justOne: false
 });
 
 module.exports = mongoose.model('Profile', ProfileSchema);

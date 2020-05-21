@@ -25,7 +25,13 @@ router
   .route('/:id/photo')
   .put(protect, authorize('Tasker', 'User', 'Admin'), profilePhotoUpload);
 
-router.route('/').get(advancedResults(Profile), getProfiles);
+router.route('/').get(
+  advancedResults(Profile, {
+    path: 'tasks',
+    select: 'title description price'
+  }),
+  getProfiles
+);
 
 router
   .route('/')
