@@ -53,6 +53,10 @@ const RequestSchema = new mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     ref: 'User',
     required: true
+  },
+  taskerID: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'User'
   }
 });
 

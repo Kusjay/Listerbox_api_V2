@@ -10,9 +10,6 @@ const sendEmail = require('../utils/sendEmail');
 // @route   POST /api/v1/tasks/:taskId/requests
 // @access  Private
 exports.addRequest = asyncHandler(async (req, res, next) => {
-  req.body.task = req.params.taskId;
-  req.body.user = req.user.id;
-
   const task = await Task.findById(req.params.taskId);
 
   if (!task) {
@@ -21,10 +18,83 @@ exports.addRequest = asyncHandler(async (req, res, next) => {
     );
   }
 
+  let taskerDetails = await Task.findById(req.params.taskId);
+  let taskerId = taskerDetails.user;
+
+  req.body.task = req.params.taskId;
+  req.body.user = req.user.id;
+  req.body.taskerID = taskerId;
+
   const request = await Request.create(req.body);
 
   res.status(201).json({
     success: true,
     data: request
+  });
+});
+
+// @desc    Show request to tasker
+// @route   POST /api/v2/requests/showResquestTasker/:requestId
+// @access  Private
+exports.showRequestTasker = asyncHandler(async (req, res, next) => {
+  let showRequest = await Request.findById(req.params.requestId).populate({
+    path: 'task user',
+    select: 'title name'
+  });
+
+  if (!showRequest) {
+    return next(
+      new ErrorResponse(
+        `No request with the id of ${req.params.requestId}`,
+        404
+      )
+    );
+  }
+
+  // Check if the request belongs to the tasker
+  if (req.user.id !== showRequest.taskerID.toString()) {
+    return next(
+      new ErrorResponse(
+        `Tasker ${req.user.id} is not authorized to access task request ${req.params.requestId}`
+      )
+    );
+  }
+
+  res.status(201).json({
+    success: true,
+    data: showRequest
+  });
+});
+
+// @desc    Show request to user
+// @route   POST /api/v2/requests/showResquestUser/:requestId
+// @access  Private
+exports.showRequestUser = asyncHandler(async (req, res, next) => {
+  let showRequest = await Request.findById(req.params.requestId).populate({
+    path: 'task user',
+    select: 'title name'
+  });
+
+  if (!showRequest) {
+    return next(
+      new ErrorResponse(
+        `No request with the id of ${req.params.requestId}`,
+        404
+      )
+    );
+  }
+
+  // Check if the request belongs to the user
+  if (req.user.id !== showRequest.user._id.toString()) {
+    return next(
+      new ErrorResponse(
+        `User ${req.user.id} is not authorized to access task request ${req.params.requestId}`
+      )
+    );
+  }
+
+  res.status(201).json({
+    success: true,
+    data: showRequest
   });
 });
