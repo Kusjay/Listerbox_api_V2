@@ -98,3 +98,50 @@ exports.showRequestUser = asyncHandler(async (req, res, next) => {
     data: showRequest
   });
 });
+
+// @desc    Accept request
+// @route   PUT /api/v2/requests/acceptrequest/:id
+// @access  Private
+exports.acceptRequest = asyncHandler(async (req, res, next) => {
+  let request = await Request.findById(req.params.id);
+
+  if (!request) {
+    return next(
+      new ErrorResponse(`No request with the id of ${req.params.id}`, 404)
+    );
+  }
+
+  // Check if the request belongs to the tasker
+  if (req.user.id !== request.taskerID.toString()) {
+    return next(
+      new ErrorResponse(
+        `Tasker ${req.user.id} is not authorized to access task request ${req.params.requestId}`
+      )
+    );
+  }
+
+  // Check if the request has been accepted, rejected, cancelled, or completed
+  if (request.status == 'Accepted') {
+    return next(new ErrorResponse(`Task ${request.task} has been accepted`));
+  } else if (request.status == 'Rejected') {
+    return next(new ErrorResponse(`Task ${request.task} has been rejected`));
+  } else if (request.status == 'Completed') {
+    return next(new ErrorResponse(`Task ${request.task} has been completed`));
+  } else if (request.status == 'Cancelled') {
+    return next(new ErrorResponse(`Task ${request.task} has been cancelled`));
+  } else {
+    updateRequest = await Request.findByIdAndUpdate(
+      req.params.id,
+      { status: 'Accepted' },
+      {
+        new: true,
+        runValidators: true
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      data: updateRequest
+    });
+  }
+});

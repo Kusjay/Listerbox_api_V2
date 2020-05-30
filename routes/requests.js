@@ -2,7 +2,8 @@ const express = require('express');
 const {
   addRequest,
   showRequestTasker,
-  showRequestUser
+  showRequestUser,
+  acceptRequest
 } = require('../controllers/requests');
 
 const Request = require('../controllers/requests');
@@ -21,5 +22,9 @@ router
 router
   .route('/showRequestUser/:requestId')
   .get(protect, authorize('User', 'Admin'), showRequestUser);
+
+router
+  .route('/acceptrequest/:id')
+  .put(protect, authorize('Tasker', 'Admin'), acceptRequest);
 
 module.exports = router;
