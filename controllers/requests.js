@@ -129,7 +129,7 @@ exports.acceptRequest = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse(`Task ${request.task} has been completed`));
   } else if (request.status == 'Cancelled') {
     return next(new ErrorResponse(`Task ${request.task} has been cancelled`));
-  } else {
+  } else if (request.status == 'Init') {
     updateRequest = await Request.findByIdAndUpdate(
       req.params.id,
       { status: 'Accepted' },
@@ -143,5 +143,30 @@ exports.acceptRequest = asyncHandler(async (req, res, next) => {
       success: true,
       data: updateRequest
     });
+
+    // Send email to user that tasker has accepted the task
+    let profile = await User.find({ _id: request.user });
+    let userEmail = profile[0].email;
+    let userName = profile[0].name;
+
+    // Get the task title that matches the specific request
+    let task = await Task.find({ _id: request.task });
+    let taskName = task[0].title;
+    let taskerName = req.user.name;
+
+    const message = `Hi ${userName},\n\nTasker ${taskerName} has accepted the service '${taskName}'.`;
+
+    try {
+      await sendEmail({
+        email: userEmail,
+        subject: `Service accepted from ${taskerName}`,
+        message
+      });
+    } catch (err) {
+      console.log(err);
+      return next(new ErrorResponse('Email could not be sent', 500));
+    }
+  } else {
+    return next(new ErrorResponse('Not authorized to accept request', 401));
   }
 });
