@@ -3,7 +3,9 @@ const {
   addRequest,
   showRequestTasker,
   showRequestUser,
-  acceptRequest
+  acceptRequest,
+  userCompleteRequest,
+  taskerCompleteRequest
 } = require('../controllers/requests');
 
 const Request = require('../controllers/requests');
@@ -26,5 +28,13 @@ router
 router
   .route('/acceptrequest/:id')
   .put(protect, authorize('Tasker', 'Admin'), acceptRequest);
+
+router
+  .route('/usercompleterequest/:id')
+  .put(protect, authorize('User', 'Admin'), userCompleteRequest);
+
+router
+  .route('/taskercompleterequest/:id')
+  .put(protect, authorize('Tasker', 'Admin'), taskerCompleteRequest);
 
 module.exports = router;
