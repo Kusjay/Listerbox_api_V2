@@ -60,4 +60,17 @@ const TaskSchema = new mongoose.Schema(
   }
 );
 
+// Cascade delete requests when a task is deleted
+TaskSchema.pre('remove', async function (next) {
+  await this.model('Request').deleteMany({ task: this._id });
+});
+
+// Reverse populate with virtuals for Requests
+TaskSchema.virtual('request', {
+  ref: 'Request',
+  localField: '_id',
+  foreignField: 'task',
+  justOne: false
+});
+
 module.exports = mongoose.model('Task', TaskSchema);

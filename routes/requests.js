@@ -7,17 +7,35 @@ const {
   userCompleteRequest,
   taskerCompleteRequest,
   taskerRejectRequest,
-  userCancelRequest
+  userCancelRequest,
+  getRequests,
+  getRequest,
+  updateRequest,
+  deleteRequest
 } = require('../controllers/requests');
 
-const Request = require('../controllers/requests');
+const Request = require('../models/Request');
 
 const router = express.Router({ mergeParams: true });
 
 const advancedResults = require('../middleware/advancedResults');
 const { protect, authorize } = require('../middleware/auth');
 
-router.route('/').post(protect, authorize('User', 'Admin'), addRequest);
+router
+  .route('/')
+  .post(protect, authorize('User', 'Admin'), addRequest)
+  .get(
+    protect,
+    authorize('Admin'),
+    advancedResults(Request, { path: 'task', select: 'title' }),
+    getRequests
+  );
+
+router
+  .route('/:id')
+  .get(protect, authorize('Admin'), getRequest)
+  .put(protect, authorize('User', 'Admin'), updateRequest)
+  .delete(protect, authorize('Admin'), deleteRequest);
 
 router
   .route('/showRequestTasker/:requestId')

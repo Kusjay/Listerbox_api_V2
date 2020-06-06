@@ -476,3 +476,104 @@ exports.userCancelRequest = asyncHandler(async (req, res, next) => {
     );
   }
 });
+
+// @desc    Get all requests
+// @desc    GET /api/v2/requests
+// @route   GET /api/v2/tasks/:taskId/requests
+// @access  Private
+exports.getRequests = asyncHandler(async (req, res, next) => {
+  if (req.params.taskId) {
+    const requests = await Request.find({ task: req.params.taskId });
+
+    if (!requests) {
+      return next(
+        new ErrorResponse(
+          `No request found with the id of ${req.params.id}`,
+          404
+        )
+      );
+    }
+
+    return res.status(200).json({
+      success: true,
+      count: requests.length,
+      data: requests
+    });
+  } else {
+    res.status(200).json(res.advancedResults);
+  }
+});
+
+// @desc    Get single request
+// @desc    GET /api/v2/requests/:id
+// @access  Private
+exports.getRequest = asyncHandler(async (req, res, next) => {
+  const request = await Request.findById(req.params.id).populate({
+    path: 'task',
+    select: 'title'
+  });
+
+  if (!request) {
+    return next(
+      new ErrorResponse(`No request found with the id of ${req.params.id}`, 404)
+    );
+  }
+
+  res.status(200).json({
+    success: true,
+    data: request
+  });
+});
+
+// @desc    Update request
+// @route   PUT /api/v2/request/:id
+// @access  Private
+exports.updateRequest = asyncHandler(async (req, res, next) => {
+  let request = await Request.findById(req.params.id);
+
+  if (!request) {
+    return next(
+      new ErrorResponse(`No request with the id of ${req.params.id}`, 404)
+    );
+  }
+
+  // Make sure the request belongs to user or the user is an admin
+  if (request.user.toString() != req.user.id && req.user.role !== 'Admin') {
+    return next(new ErrorResponse(`Not authorized to update request`, 401));
+  }
+
+  request = await Request.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true
+  });
+
+  res.status(200).json({
+    success: true,
+    data: request
+  });
+});
+
+// @desc    Delete request
+// @route   DELETE /api/v2/request/:id
+// @access  Private/Admin
+exports.deleteRequest = asyncHandler(async (req, res, next) => {
+  const request = await Request.findById(req.params.id);
+
+  if (!request) {
+    return next(
+      new ErrorResponse(`No request with the id of ${req.params.id}`, 404)
+    );
+  }
+
+  // Make sure only admin can delete request
+  if (req.user.role !== 'Admin') {
+    return next(new ErrorResponse(`Not authorized to delete request`, 401));
+  }
+
+  await request.remove();
+
+  res.status(200).json({
+    success: true,
+    data: {}
+  });
+});
