@@ -19,6 +19,7 @@ const users = require('./routes/users');
 const profiles = require('./routes/profiles');
 const tasks = require('./routes/tasks');
 const requests = require('./routes/requests');
+const reviews = require('./routes/reviews');
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use('/api/v2/users', users);
 app.use('/api/v2/profiles', profiles);
 app.use('/api/v2/tasks', tasks);
 app.use('/api/v2/requests', requests);
+app.use('/api/v2/reviews', reviews);
 
 app.use(errorHandler);
 
