@@ -58,7 +58,6 @@ exports.getTasks = asyncHandler(async (req, res, next) => {
 // @desc    Get single task
 // @route   GET /api/v2/tasks/:id
 // @access  Public
-
 exports.getTask = asyncHandler(async (req, res, next) => {
   const task = await Task.findById(req.params.id).populate({
     path: 'profile',

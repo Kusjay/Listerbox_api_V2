@@ -11,7 +11,7 @@ const PaymentSchema = new mongoose.Schema({
     ref: 'Task',
     required: true
   },
-  referenceID: {
+  referenceId: {
     type: String,
     required: true
   },
