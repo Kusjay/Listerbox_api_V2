@@ -25,7 +25,7 @@ exports.getCustomers = asyncHandler(async (req, res, next) => {
 
 // @desc    Initializing payment
 // @route   GET /api/v2/payments/initialize/:taskId
-// @access  Private/Admin
+// @access  Private/User
 exports.initializePayment = asyncHandler(async (req, res, next) => {
   let task = await Task.findById(req.params.taskId);
 
@@ -76,8 +76,8 @@ exports.initializePayment = asyncHandler(async (req, res, next) => {
       data += chunk;
     });
     paymentRes.on('end', async () => {
-      data = JSON.parse(data);
-      if (data['status']) {
+      verifiedData = JSON.parse(data);
+      if (verifiedData['status']) {
         // Pay %85 to the tasker and %15 to Listerbox
         const netAmount = (85 / 100) * task.price;
 
@@ -87,17 +87,14 @@ exports.initializePayment = asyncHandler(async (req, res, next) => {
           amount: netAmount,
           taskOwner: task.user,
           referenceId: referenceId,
-          accessCode: data['data']['access_code'],
+          accessCode: verifiedData['data']['access_code'],
           status: 'Init'
         };
-
-        console.log(data);
-        console.log(data['data']['access_code']);
 
         await Payment.create(paymentDetails);
 
         let responseData = {
-          payment_url: data['data']['authorization_url'],
+          payment_url: verifiedData['data']['authorization_url'],
           reference_id: referenceId
         };
 
@@ -117,4 +114,80 @@ exports.initializePayment = asyncHandler(async (req, res, next) => {
   // Write data to request body
   paymentReq.write(paymentData);
   paymentReq.end();
+});
+
+// @desc    Verify payment
+// @route   GET /api/v2/payments/verify/:referenceId
+// @access  Private/User
+
+exports.verifyPayment = asyncHandler(async (req, res, next) => {
+  let paymentData = await Payment.findOne({
+    referenceId: req.params.referenceId
+  });
+
+  if (!paymentData) {
+    return next(
+      new ErrorResponse(
+        `No payment with reference Id with id of ${req.params.referenceId}`
+      ),
+      404
+    );
+  }
+
+  if (paymentData['status'][0] === 'Paid') {
+    res.status(200).json({
+      success: true,
+      data: paymentData
+    });
+    return;
+  }
+
+  // Verify transaction
+  let options = {
+    host: process.env.PAYMENT_HOST,
+    path: `/transaction/verify/${paymentData['referenceId']}`,
+    headers: {
+      Authorization: `Bearer ${process.env.SECRET_KEY}`,
+      'Content-Type': 'application/json'
+    }
+  };
+
+  let data = '';
+
+  let paymentVer = https.get(options, (paymentRes) => {
+    paymentRes.on('data', (chunk) => {
+      data += chunk;
+    });
+    paymentRes.on('end', async () => {
+      verifiedData = JSON.parse(data);
+      if (
+        verifiedData['status'] &&
+        verifiedData['data']['status'] === 'success'
+      ) {
+        paymentData = await Payment.findOneAndUpdate(
+          { referenceId: paymentData['referenceId'] },
+          { status: 'Paid', paidAt: verifiedData['data']['paid_at'] }
+        );
+
+        res.status(200).json({
+          success: true,
+          data: paymentData
+        });
+      } else {
+        res.status(404).json({
+          success: false,
+          data: verifiedData['message']
+        });
+      }
+
+      return;
+    });
+  });
+  paymentVer.on('error', (e) => {
+    res.status(400).json({
+      success: false,
+      data: e.message
+    });
+    return;
+  });
 });
