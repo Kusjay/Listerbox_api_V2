@@ -6,6 +6,9 @@ const asyncHandler = require('../middleware/async');
 const Payment = require('../models/Payment');
 const Task = require('../models/Task');
 const Request = require('../models/Request');
+const Earning = require('../models/Earning');
+const User = require('../models/User');
+const sendEmail = require('../utils/sendEmail');
 
 // @desc    Get all customers
 // @route   GET /api/v2/payments/customers
@@ -173,6 +176,59 @@ exports.verifyPayment = asyncHandler(async (req, res, next) => {
           success: true,
           data: paymentData
         });
+
+        // Get task details and save to Earnings collection
+        let transactions = await Payment.find({
+          taskOwner: paymentData.taskOwner,
+          status: 'Paid'
+        });
+
+        // Calculate all paid transactions for Taskers to get net income
+        const getIncome = transactions.map((amt) => amt.amount);
+        const getNetIncome = getIncome.reduce(
+          (partial_sum, a) => partial_sum + a,
+          0
+        );
+
+        // Calculate payout to get withdrawn amount
+        /* Put code here.......But for now let's use 2000 for amount withdrawn */
+
+        let earning = await Earning.find({
+          taskOwnerId: paymentData.taskOwner
+        });
+
+        req.body.netIncome = getNetIncome;
+        req.body.availableForWithdrawal = getNetIncome - 2000;
+        req.body.withdrawn = 2000;
+        req.body.paymentId = paymentData._id;
+        req.body.taskId = paymentData.task;
+        req.body.taskOwnerId = paymentData.taskOwner;
+        req.body.referenceId = paymentData.referenceId;
+
+        if (!earning) {
+          await Earning.create(req.body);
+        } else {
+          await Earning.findOneAndUpdate(
+            { taskId: paymentData.task },
+            req.body,
+            {
+              new: true,
+              runValidators: true
+            }
+          );
+        }
+
+        // Send email to Tasker after User pays for a service successfully
+        let taskerDetails = await User.find({ _id: paymentData.taskOwner });
+        let taskerTaskDetail = await Task.find({ user: paymentData.taskOwner });
+
+        const message = `Hi ${taskerDetails[0].name},\n\nYou just got an offer for your service '${taskerTaskDetail[0].title}'. Please login to your dashboard to get your task started.\n\nThanks,\nListerbox`;
+
+        await sendEmail({
+          email: taskerDetails[0].email,
+          subject: 'Task Request',
+          message
+        });
       } else {
         res.status(404).json({
           success: false,
@@ -191,3 +247,7 @@ exports.verifyPayment = asyncHandler(async (req, res, next) => {
     return;
   });
 });
+
+// @desc    Get a particular transaction by referenceId
+// @route   GET /api/v2/payments/referenceId/:taskId
+// @access  Private/Admin

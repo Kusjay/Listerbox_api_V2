@@ -154,7 +154,7 @@ exports.acceptRequest = asyncHandler(async (req, res, next) => {
     let taskName = task[0].title;
     let taskerName = req.user.name;
 
-    const message = `Hi ${userName},\n\nTasker ${taskerName} has accepted the service '${taskName}'.`;
+    const message = `Hi ${userName},\n\nTasker ${taskerName} has accepted the service '${taskName}'.\n\nThanks,\nListerbox`;
 
     try {
       await sendEmail({
@@ -230,7 +230,7 @@ exports.userCompleteRequest = asyncHandler(async (req, res, next) => {
     let tasker = await User.find({ _id: request.taskerID });
     let taskerEmail = tasker[0].email;
 
-    const message = `Hi ${taskerName},\n\n${userName} has marked the service '${taskName}' as completed.`;
+    const message = `Hi ${taskerName},\n\n${userName} has marked the service '${taskName}' as completed.\n\nThanks,\nListerbox`;
 
     try {
       await sendEmail({
@@ -306,7 +306,7 @@ exports.taskerCompleteRequest = asyncHandler(async (req, res, next) => {
     let tasker = await User.find({ _id: request.taskerID });
     let taskerEmail = tasker[0].email;
 
-    const message = `Hi ${userName},\n\nTasker ${taskerName} has marked the service '${taskName}' as completed. Login into your dashboard to mark this service as completed, If you're satisfied with the service.`;
+    const message = `Hi ${userName},\n\nTasker ${taskerName} has marked the service '${taskName}' as completed. Login into your dashboard to mark this service as completed, If you're satisfied with the service.\n\nThanks,\nListerbox`;
 
     try {
       await sendEmail({
@@ -382,7 +382,7 @@ exports.taskerRejectRequest = asyncHandler(async (req, res, next) => {
     let tasker = await User.find({ _id: request.taskerID });
     let taskerEmail = tasker[0].email;
 
-    const message = `Hi ${userName},\n\nTasker ${taskerName} has rejected the service '${taskName}'`;
+    const message = `Hi ${userName},\n\nTasker ${taskerName} has rejected the service '${taskName}'.\n\nThanks,\nListerbox`;
 
     try {
       await sendEmail({
@@ -458,7 +458,7 @@ exports.userCancelRequest = asyncHandler(async (req, res, next) => {
     let taskerEmail = tasker[0].email;
     let taskerName = tasker[0].name;
 
-    const message = `Hi ${taskerName},\n\n${userName} has cancelled the service '${taskName}'`;
+    const message = `Hi ${taskerName},\n\n${userName} has cancelled the service '${taskName}'.\n\nThanks,\nListerbox`;
 
     try {
       await sendEmail({

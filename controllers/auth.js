@@ -184,7 +184,7 @@ exports.updatePassword = asyncHandler(async (req, res, next) => {
 
 // @desc    Forgot password
 // @route   POST /api/v2/auth/forgotpassword
-// @access  Private
+// @access  Public
 exports.forgotPassword = asyncHandler(async (req, res, next) => {
   const user = await User.findOne({ email: req.body.email });
 
