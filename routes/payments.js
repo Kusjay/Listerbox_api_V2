@@ -2,7 +2,10 @@ const express = require('express');
 const {
   getCustomers,
   initializePayment,
-  verifyPayment
+  verifyPayment,
+  getTransactionReference,
+  getTransaction,
+  getTransactionsForTasker
 } = require('../controllers/payments');
 
 const router = express.Router();
@@ -18,5 +21,17 @@ router
 router
   .route('/verify/:referenceId')
   .get(protect, authorize('User', 'Admin'), verifyPayment);
+
+router
+  .route('/reference/:referenceId')
+  .get(protect, authorize('Admin'), getTransactionReference);
+
+router
+  .route('/transaction/:taskId')
+  .get(protect, authorize('Admin'), getTransaction);
+
+router
+  .route('/transaction/taskerId/:taskerId')
+  .get(protect, authorize('Admin'), getTransactionsForTasker);
 
 module.exports = router;

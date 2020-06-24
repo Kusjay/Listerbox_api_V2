@@ -249,5 +249,68 @@ exports.verifyPayment = asyncHandler(async (req, res, next) => {
 });
 
 // @desc    Get a particular transaction by referenceId
-// @route   GET /api/v2/payments/referenceId/:taskId
+// @route   GET /api/v2/payments/reference/:referenceId
 // @access  Private/Admin
+exports.getTransactionReference = asyncHandler(async (req, res, next) => {
+  const reference = await Payment.find({ referenceId: req.params.referenceId });
+
+  if (!reference) {
+    return next(
+      new ErrorResponse(
+        `No payment found with reference id of ${req.params.id}`
+      ),
+      404
+    );
+  }
+
+  res.status(200).json({
+    success: true,
+    data: reference
+  });
+});
+
+// @desc    Get all approved transactions for a particular task
+// @route   GET /api/v2/payments/transaction/:taskId
+// @access  Private/Admin
+exports.getTransaction = asyncHandler(async (req, res, next) => {
+  let paymentData = await Payment.find({
+    task: req.params.taskId,
+    status: 'Paid'
+  });
+
+  if (!paymentData) {
+    return next(
+      new ErrorResponse(`No payment found for task ${req.params.taskId}`),
+      404
+    );
+  }
+
+  res.status(200).json({
+    success: true,
+    data: paymentData
+  });
+});
+
+// @desc    Get all approved transactions for a particular tasker by userId
+// @route   GET /api/v2/payments/transaction/:taskerId
+// @access  Private/Tasker
+exports.getTransactionsForTasker = asyncHandler(async (req, res, next) => {
+  let transactions = await Payment.find({
+    taskOwner: req.params.taskerId,
+    status: 'Paid'
+  });
+
+  if (!transactions) {
+    return next(
+      new ErrorResponse(
+        `No paid transactions available for user id ${req.params.taskerId}`
+      ),
+      404
+    );
+  }
+
+  res.status(200).json({
+    success: true,
+    data: transactions
+  });
+});
