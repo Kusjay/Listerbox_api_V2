@@ -21,6 +21,7 @@ const tasks = require('./routes/tasks');
 const requests = require('./routes/requests');
 const reviews = require('./routes/reviews');
 const payments = require('./routes/payments');
+const payouts = require('./routes/payouts');
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.use('/api/v2/tasks', tasks);
 app.use('/api/v2/requests', requests);
 app.use('/api/v2/reviews', reviews);
 app.use('/api/v2/payments', payments);
+app.use('/api/v2/payouts', payouts);
 
 app.use(errorHandler);
 
