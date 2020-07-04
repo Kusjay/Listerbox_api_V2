@@ -7,6 +7,7 @@ const Payment = require('../models/Payment');
 const Task = require('../models/Task');
 const Request = require('../models/Request');
 const Earning = require('../models/Earning');
+const Payout = require('../models/Payout');
 const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
 
@@ -191,15 +192,36 @@ exports.verifyPayment = asyncHandler(async (req, res, next) => {
         );
 
         // Calculate payout to get withdrawn amount
-        /* Put code here.......But for now let's use 2000 for amount withdrawn */
+        let payoutDetails = await Payout.find({
+          taskOwner: paymentData.taskOwner
+        });
+
+        req.body.status = 'Init';
+        req.body.amount = 0;
+        req.body.task = paymentData.task;
+        req.body.referenceId = paymentData.referenceId;
+        req.body.taskOwner = paymentData.taskOwner;
+
+        if (payoutDetails == 0) {
+          await Payout.create(req.body);
+          console.log('Payout created');
+        }
+
+        // Select and calculate all withdrawn payouts
+        const getPayout = payoutDetails.map((amt) => amt.amount);
+        const getTotalPayoutAmount = getPayout.reduce(
+          (withdrawn_sum, a) => withdrawn_sum + a,
+          0
+        );
+        const amountWithdrawn = getTotalPayoutAmount;
 
         let earning = await Earning.find({
           taskOwnerId: paymentData.taskOwner
         });
 
         req.body.netIncome = getNetIncome;
-        req.body.availableForWithdrawal = getNetIncome - 2000;
-        req.body.withdrawn = 2000;
+        req.body.availableForWithdrawal = getNetIncome - amountWithdrawn;
+        req.body.withdrawn = amountWithdrawn;
         req.body.paymentId = paymentData._id;
         req.body.taskId = paymentData.task;
         req.body.taskOwnerId = paymentData.taskOwner;

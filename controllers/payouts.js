@@ -86,6 +86,29 @@ exports.requestPayout = asyncHandler(async (req, res, next) => {
 });
 
 // @desc    Accept Payout
-// @route   PUT /api/v2/payouts/acceptPayout/:taskOwner
+// @route   PUT /api/v2/payouts/acceptPayout/:taskOwnerId
 // @access  Private/Admin
-exports;
+// exports.acceptPayout = asyncHandler(async (req, res, next) => {
+//   let payoutRequest = await Payout.find({ taskOwner: req.params.taskOwnerId });
+//   let earningDetails = await Earning.find({ taskOwnerId: req.params.taskOwnerId });
+
+//   if (!payoutRequest) {
+//     return next(
+//       new ErrorResponse(
+//         `No payout request for tasker with id of ${req.params.taskOwnerId}`,
+//         404
+//       )
+//     );
+//   }
+
+//   let payout = await Payout.findOneAndUpdate(
+//     { taskOwner: req.params.taskOwnerId },
+//     { status: 'Paid' },
+//     { new: true, runValidators: true }
+//   );
+
+//   const availableForWithdrawal = earningDetails[0].availableForWithdrawal;
+
+//   const earningWithdrawn
+
+// })
