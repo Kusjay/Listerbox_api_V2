@@ -144,12 +144,77 @@ exports.acceptPayout = asyncHandler(async (req, res, next) => {
   const taskerName = taskerDetails[0].name;
   const taskerEmail = taskerDetails[0].email;
 
-  const message = `Hi ${taskerName},\n\nyour payout of ₦${amountWithdrawn} has been approved, and transfered to your bank account.\n\nThanks,\nListerbox`;
+  const message = `Hi ${taskerName},\n\nYour payout of ₦${amountWithdrawn} has been approved, and transfered to your bank account.\n\nThanks,\nListerbox`;
 
   try {
     await sendEmail({
       email: taskerEmail,
       subject: 'Payout Approved',
+      message
+    });
+  } catch (err) {
+    console.log(err);
+  }
+
+  res.status(200).json({
+    success: true,
+    data: payout
+  });
+});
+
+// @desc    Reject Payout
+// @route   PUT /api/v2/payouts/rejectPayout/:Id
+// @access  Private/Admin
+exports.rejectPayout = asyncHandler(async (req, res, next) => {
+  let payoutRequest = await Payout.findById(req.params.Id);
+
+  if (!payoutRequest) {
+    return next(
+      new ErrorResponse(`No payout request id of ${req.params.Id}`, 404)
+    );
+  }
+
+  let payout = await Payout.findOneAndUpdate(
+    { _id: req.params.Id },
+    { status: 'Rejected' },
+    { new: true, runValidators: true }
+  );
+
+  let earningDetails = await Earning.find({
+    taskOwnerId: payoutRequest.taskOwner
+  });
+
+  const amountAvailableForWithdrawal = earningDetails[0].availableForWithdrawal;
+  const earningWithdrawn = earningDetails[0].withdrawn;
+  const amountWithdrawn = payoutRequest.amount;
+  const pendingClerance = 0;
+
+  // Total money withdrawn
+  const totalWithdrawn = earningWithdrawn + amountWithdrawn;
+  const availableWithdraw = amountAvailableForWithdrawal - totalWithdrawn;
+
+  await Earning.findOneAndUpdate(
+    { taskOwnerId: payoutRequest.taskOwner },
+    {
+      withdrawn: totalWithdrawn,
+      availableForWithdrawal: availableWithdraw,
+      pendingClerance
+    },
+    { new: true, runValidators: true }
+  );
+
+  // Send Email to tasker when payout is approved by admin
+  let taskerDetails = await User.find({ _id: payoutRequest.taskOwner });
+
+  const taskerName = taskerDetails[0].name;
+  const taskerEmail = taskerDetails[0].email;
+
+  const message = `Hi ${taskerName},\n\nYour payout of ₦${amountWithdrawn} has been rejected, contact our customer care service for more details.\n\nThanks,\nListerbox`;
+
+  try {
+    await sendEmail({
+      email: taskerEmail,
+      subject: 'Payout Rejected',
       message
     });
   } catch (err) {

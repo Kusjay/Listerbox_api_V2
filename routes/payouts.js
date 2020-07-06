@@ -1,5 +1,9 @@
 const express = require('express');
-const { requestPayout, acceptPayout } = require('../controllers/payouts');
+const {
+  requestPayout,
+  acceptPayout,
+  rejectPayout
+} = require('../controllers/payouts');
 
 const router = express.Router();
 
@@ -12,5 +16,9 @@ router
 router
   .route('/acceptPayout/:Id')
   .put(protect, authorize('Admin'), acceptPayout);
+
+router
+  .route('/rejectPayout/:Id')
+  .put(protect, authorize('Admin'), rejectPayout);
 
 module.exports = router;
