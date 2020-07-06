@@ -198,8 +198,6 @@ exports.verifyPayment = asyncHandler(async (req, res, next) => {
 
         req.body.status = 'Init';
         req.body.amount = 0;
-        req.body.task = paymentData.task;
-        req.body.referenceId = paymentData.referenceId;
         req.body.taskOwner = paymentData.taskOwner;
 
         if (payoutDetails == 0) {
@@ -219,19 +217,19 @@ exports.verifyPayment = asyncHandler(async (req, res, next) => {
           taskOwnerId: paymentData.taskOwner
         });
 
-        req.body.netIncome = getNetIncome;
-        req.body.availableForWithdrawal = getNetIncome - amountWithdrawn;
-        req.body.withdrawn = amountWithdrawn;
-        req.body.paymentId = paymentData._id;
-        req.body.taskId = paymentData.task;
-        req.body.taskOwnerId = paymentData.taskOwner;
-        req.body.referenceId = paymentData.referenceId;
+        if (earning == 0) {
+          req.body.netIncome = getNetIncome;
+          req.body.taskOwnerId = paymentData.taskOwner;
 
-        if (!earning) {
           await Earning.create(req.body);
         } else {
+          req.body.netIncome = getNetIncome;
+          req.body.availableForWithdrawal = getNetIncome - amountWithdrawn;
+          req.body.withdrawn = amountWithdrawn;
+          req.body.taskOwnerId = paymentData.taskOwner;
+
           await Earning.findOneAndUpdate(
-            { taskId: paymentData.task },
+            { taskOwnerId: paymentData.taskOwner },
             req.body,
             {
               new: true,

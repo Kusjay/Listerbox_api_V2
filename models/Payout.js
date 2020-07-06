@@ -5,15 +5,6 @@ const PayoutSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
-  task: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Task',
-    required: true
-  },
-  referenceId: {
-    type: String,
-    required: true
-  },
   taskOwner: {
     type: mongoose.Schema.ObjectId,
     ref: 'User',
@@ -22,8 +13,8 @@ const PayoutSchema = new mongoose.Schema({
   status: {
     type: [String],
     required: true,
-    enum: ['Init', 'Paid', 'Rejected'],
-    default: 'Init'
+    enum: ['Pending', 'Paid', 'Rejected'],
+    default: 'Pending'
   },
   createdAt: {
     type: Date,

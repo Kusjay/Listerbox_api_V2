@@ -9,6 +9,10 @@ const EarningSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  pendingClerance: {
+    type: Number,
+    default: 0
+  },
   availableForWithdrawal: {
     type: Number,
     default: 0
@@ -16,17 +20,6 @@ const EarningSchema = new mongoose.Schema({
   taskOwnerId: {
     type: mongoose.Schema.ObjectId,
     ref: 'User'
-  },
-  taskId: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Task'
-  },
-  paymentId: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Payment'
-  },
-  referenceId: {
-    type: String
   },
   createdAt: {
     type: Date,
