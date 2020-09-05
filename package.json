@@ -30,6 +30,8 @@
     "nodemailer": "^6.4.6",
     "paystack": "^2.0.1",
     "slugify": "^1.4.0",
+    "stripe": "^8.69.0",
+    "uuid": "^8.2.0",
     "xss-clean": "^0.1.1"
   }
 }
